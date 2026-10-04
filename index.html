@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>E-Commerce Admin Dashboard</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 font-sans">
+
+  <div class="flex min-h-screen">
+    
+    <!-- 1. Sidebar Menu -->
+    <div class="w-64 bg-slate-900 text-white p-6 hidden md:block">
+      <h2 class="text-xl font-bold mb-8 text-indigo-400">ShopAdmin 🛒</h2>
+      <ul class="space-y-4 font-medium">
+        <li class="bg-indigo-600 p-3 rounded-lg cursor-pointer">📊 Dashboard</li>
+        <li class="p-3 text-slate-400 hover:text-white cursor-pointer">📦 Products</li>
+        <li class="p-3 text-slate-400 hover:text-white cursor-pointer">🛍️ Orders</li>
+        <li class="p-3 text-slate-400 hover:text-white cursor-pointer">👥 Customers</li>
+        <li class="p-3 text-slate-400 hover:text-white cursor-pointer">⚙ Settings</li>
+      </ul>
+    </div>
+
+    <!-- 2. Main Content Area -->
+    <div class="flex-1 p-8">
+      
+      <!-- Header -->
+      <div class="mb-8 flex justify-between items-center">
+        <div>
+          <h1 class="text-2xl font-bold text-slate-800">Welcome back, Admin! 👋</h1>
+          <p class="text-slate-500 text-sm">Real-time order management and analytics</p>
+        </div>
+        <button class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 font-medium text-sm">
+          + Add New Order
+        </button>
+      </div>
+
+      <!-- Stats Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+          <p class="text-slate-500 text-sm font-medium">Total Sales</p>
+          <h2 class="text-3xl font-bold text-slate-800 mt-2">₹2,25,000</h2>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+          <p class="text-slate-500 text-sm font-medium">Total Orders</p>
+          <h2 class="text-3xl font-bold text-slate-800 mt-2" id="totalOrdersCount">4</h2>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+          <p class="text-slate-500 text-sm font-medium">Total Customers</p>
+          <h2 class="text-3xl font-bold text-slate-800 mt-2">1,200</h2>
+        </div>
+      </div>
+
+      <!-- Recent Orders & Filters -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        
+        <!-- Search Bar and Status Filter Controls -->
+        <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
+          <h3 class="text-lg font-bold text-slate-800">Recent Orders</h3>
+          
+          <div class="flex gap-3 w-full md:w-auto">
+            <!-- Search Input -->
+            <input 
+              type="text" 
+              id="searchInput" 
+              placeholder="Search customer or product..." 
+              class="border border-slate-300 rounded-lg px-4 py-2 text-sm w-full md:w-64 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              onkeyup="filterOrders()"
+            />
+
+            <!-- Status Filter -->
+            <select 
+              id="statusFilter" 
+              class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              onchange="filterOrders()"
+            >
+              <option value="ALL">All Status</option>
+              <option value="Completed">Completed</option>
+              <option value="Pending">Pending</option>
+              <option value="Shipping">Shipping</option>
+            </select>
+          </div>
+        </div>
+        
+        <!-- Orders Table -->
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="border-b text-slate-400 text-sm">
+              <th class="py-3">Order ID</th>
+              <th class="py-3">Customer</th>
+              <th class="py-3">Product</th>
+              <th class="py-3">Amount</th>
+              <th class="py-3">Status</th>
+            </tr>
+          </thead>
+          <tbody id="ordersTableBody" class="text-slate-700 text-sm">
+            <!-- Rendered by JavaScript -->
+          </tbody>
+        </table>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- 3. JAVASCRIPT LOGIC -->
+  <script>
+    // Sample Orders Data
+    const ordersData = [
+      { id: '#ORD-101', customer: 'Rahul Sharma', product: 'Wireless Headphones', price: '₹1,499', status: 'Completed' },
+      { id: '#ORD-102', customer: 'Priya Singh', product: 'Smart Watch Series 5', price: '₹2,999', status: 'Pending' },
+      { id: '#ORD-103', customer: 'Amit Verma', product: 'Mechanical Keyboard', price: '₹899', status: 'Completed' },
+      { id: '#ORD-104', customer: 'Rohan Gupta', product: 'Android Smartphone', price: '₹15,999', status: 'Shipping' }
+    ];
+
+    // Function to render table rows
+    function renderTable(data) {
+      const tableBody = document.getElementById('ordersTableBody');
+      tableBody.innerHTML = '';
+
+      if (data.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-slate-400">No orders found!</td></tr>`;
+        return;
+      }
+
+      data.forEach(order => {
+        let badgeColor = 'bg-emerald-100 text-emerald-700';
+        if (order.status === 'Pending') badgeColor = 'bg-amber-100 text-amber-700';
+        if (order.status === 'Shipping') badgeColor = 'bg-blue-100 text-blue-700';
+
+        const rowHtml = `
+          <tr class="border-b hover:bg-slate-50">
+            <td class="py-3 font-semibold">${order.id}</td>
+            <td class="py-3">${order.customer}</td>
+            <td class="py-3">${order.product}</td>
+            <td class="py-3 font-bold">${order.price}</td>
+            <td class="py-3"><span class="${badgeColor} px-2.5 py-1 rounded-full text-xs font-semibold">${order.status}</span></td>
+          </tr>
+        `;
+        tableBody.innerHTML += rowHtml;
+      });
+    }
+
+    // Function to filter orders by search text and status
+    function filterOrders() {
+      const searchText = document.getElementById('searchInput').value.toLowerCase();
+      const selectedStatus = document.getElementById('statusFilter').value;
+
+      const filtered = ordersData.filter(order => {
+        const matchesSearch = order.customer.toLowerCase().includes(searchText) || 
+                              order.product.toLowerCase().includes(searchText);
+        const matchesStatus = selectedStatus === 'ALL' || order.status === selectedStatus;
+
+        return matchesSearch && matchesStatus;
+      });
+
+      renderTable(filtered);
+    }
+
+    // Initial render
+    renderTable(ordersData);
+  </script>
+
+</body>
+</html>  
